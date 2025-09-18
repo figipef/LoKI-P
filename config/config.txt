@@ -1,0 +1,10 @@
+# config.txt
+
+# ===========================
+#  Solver Configuration File 
+# ===========================
+
+Solver = Explicit
+Solver_Type = RK4
+Convection_Scheme = UNO2
+Chemistry = No
