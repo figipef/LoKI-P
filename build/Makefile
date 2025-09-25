@@ -29,7 +29,7 @@ TARGET := $(BINDIR)/$(PROGRAM_NAME)
 all: $(TARGET)
 
 # Linking
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) | $(BINDIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 # Compilation
@@ -42,7 +42,7 @@ $(OBJDIR):
 
 # Create bin directory
 $(BINDIR):
-	mkdir $(ROOTDIR)/bin
+	@if not exist "$(BINDIR)" mkdir "$(BINDIR)"
 
 # Clean
 clean:
