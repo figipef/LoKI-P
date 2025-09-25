@@ -2,24 +2,29 @@
 #include <iostream>
 
 #include "configparser.h"
+#include "inputparser.h"   
 
 int main() { 
 
-    ConfigParser config;
-	
-	std::string solverType;
+    ConfigParser solver_cfg;
+    InputParser input_cfg;
 
-	try {
+    try {
+        solver_cfg = parseSolverConfig("../config/config.txt");
 
-        config.load("config/config.txt");
-        solverType = config.get("Solver_Type");
-
-    } catch (const std::exception& e) {
-        std::cerr << "Configuration error: " << e.what() << '\n';
-        return 1;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error parsing config: " << e.what() << "\n";
     }
     
-    std::cout << "compilation testing\n " << solverType; 
+    std::cout << "compilation testing\n " << solver_cfg.solverType<<"\n"; 
+
+    try {
+        input_cfg = parseInputFile("../INPUT.txt");
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error parsing file: " << e.what() << "\n";
+    }
 
     return 0;
 }

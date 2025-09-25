@@ -1,42 +1,43 @@
-/*
-Configuration File Parser
-*/
-
 #include "configparser.h"
 
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <algorithm>
 
-void ConfigParser::load(const std::string& filename) {
+// Helper trim
+static std::string trim(const std::string& str) {
+    size_t start = str.find_first_not_of(" \t\r\n");
+    size_t end   = str.find_last_not_of(" \t\r\n");
+    return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);
+}
 
-    std::ifstream file("../" + filename);
+ConfigParser parseSolverConfig(const std::string& filename) {
+    ConfigParser cfg;
 
-    if (!file) throw std::runtime_error("Failed to open config file");
+    std::ifstream file(filename);
+    if (!file.is_open())
+        throw std::runtime_error("Failed to open config file: " + filename);
 
     std::string line;
-
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == '#') continue;
 
-        std::istringstream iss(line);
-        std::string key, value;
-        if (std::getline(iss, key, '=') && std::getline(iss, value)) {
-            data[trim(key)] = trim(value);
+        auto pos = line.find('=');
+        if (pos == std::string::npos) continue;
+
+        std::string key   = trim(line.substr(0, pos));
+        std::string value = trim(line.substr(pos + 1));
+
+        if (key == "Solver") cfg.solver = value;
+        else if (key == "Solver_Type") cfg.solverType = value;
+        else if (key == "Convection_Scheme") cfg.convectionScheme = value;
+        else if (key == "Chemistry") {
+            if (value == "Yes" || value == "ON" || value == "True")
+                cfg.chemistry = true;
+            else
+                cfg.chemistry = false;
         }
     }
-}
 
-std::string ConfigParser::get(const std::string& key) const {
-    auto it = data.find(key);
-    if (it == data.end())
-        throw std::runtime_error("Missing config key: " + key);
-    return it->second;
-}
-
-std::string ConfigParser::trim(const std::string& str) {
-    size_t start = str.find_first_not_of(" \t\r\n");
-    size_t end = str.find_last_not_of(" \t\r\n");
-    return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);
+    return cfg;
 }
