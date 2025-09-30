@@ -20,14 +20,26 @@ RIGHT_POTENTIAL=                0     V
 POTENTIAL_TYPE=                 OSC
 FREQ=                           5000    S^-1
 
-LFA/LEA=                        LFA
+LFA/LEA=                        LEA
 
 CHEMISTRY=                      ON
 NUMBER_SPECIES=                 4
 NUMBER_REACTIONS=               7
+
+SPECIES=
+NAMES=                          "ELECTRON","ARGON","ARGON_STAR","ARGON_ION"
+MASS=                           1,1,1,1
+CHARGE=                         -1,0,0,1
+
 
 REACT_TABLE=
  0  0  0  1  1  1  0
  0 -1  1 -1  0  1  1
  0  1 -1  0 -1 -2 -1
  0  0  0  1  1  1  0
+
+WALL_REACT_TABLE=
+-1  0  0 
+ 0  1  1
+ 0 -1  0
+ 0  0 -1
