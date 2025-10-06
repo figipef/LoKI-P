@@ -7,15 +7,15 @@ ELECTRON_DENSITY=               1E6   M-3
 ELECTRON_MEAN_ENERGY=           5     EV
 SECONDARY_ELECTRON_MEAN_ENERGY= 2.5   EV
 
-GRID_SIZE=                      102
-PLASMA_INIT=                    34
-PLASMA_END=                     68
+GRID_SIZE=                      4
+PLASMA_INIT_INDEX=              1
+PLASMA_END_INDEX=              	2
 
 PERMITIVITY=                    5
 
-GRID1=                          34
-GRID2=                          34
-GRID3=                          34
+GRID1=                          1
+GRID2=                          2
+GRID3=                          1
 
 
 LENGTH1=                        3E-3 M
