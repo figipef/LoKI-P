@@ -65,7 +65,7 @@ InputParser parseInputFile(const std::string& filename) {
 
         std::string trimmed = trim(line);
 
-        // Check for block transitions
+        // --- Handle table reading ---
         if (readingReactTable && trimmed.find("WALL_REACT_TABLE") != std::string::npos) {
             readingReactTable = false;
             readingWallReactTable = true;
@@ -98,6 +98,7 @@ InputParser parseInputFile(const std::string& filename) {
             continue;
         }
 
+        // --- Normal line with key=value ---
         auto pos = trimmed.find('=');
         if (pos == std::string::npos) continue;
 
@@ -106,16 +107,16 @@ InputParser parseInputFile(const std::string& filename) {
         std::string value = strip_units(raw_value);
 
         try {
+            // === Scalars ===
             if (key == "GAS_TEMPERATURE") cfg.gasTemperature = std::stod(value);
             else if (key == "GAS_PRESSURE") cfg.gasPressure = std::stod(value);
             else if (key == "ELECTRON_DENSITY") cfg.electronDensity = std::stod(value);
             else if (key == "ELECTRON_MEAN_ENERGY") cfg.electronMeanEnergy = std::stod(value);
             else if (key == "SECONDARY_ELECTRON_MEAN_ENERGY") cfg.secondaryElectronMeanEnergy = std::stod(value);
             else if (key == "GRID_SIZE") cfg.gridSize = std::stoi(value);
-            else if (key == "GRID_INIT") cfg.gridInit = std::stoi(value);
-            else if (key == "GRID_END") cfg.gridEnd = std::stoi(value);
+            else if (key == "PLASMA_INIT") cfg.plasmaInit = std::stoi(value);
+            else if (key == "PLASMA_END") cfg.plasmaEnd = std::stoi(value);
             else if (key == "PERMITIVITY") cfg.permitivity = std::stod(value);
-            else if (key == "LENGTH") cfg.length = std::stod(value);
             else if (key == "LEFT_POTENTIAL") cfg.leftPotential = std::stod(value);
             else if (key == "RIGHT_POTENTIAL") cfg.rightPotential = std::stod(value);
             else if (key == "POTENTIAL_TYPE") cfg.potentialType = raw_value;
@@ -130,6 +131,18 @@ InputParser parseInputFile(const std::string& filename) {
             else if (key == "MASS") cfg.speciesMasses = parseDoubleList(raw_value);
             else if (key == "CHARGE") cfg.speciesCharges = parseIntList(raw_value);
             else if (key == "SPECIES") continue; // marker only
+
+            // === Variable-length grids and lengths ===
+            else if (key.rfind("GRID", 0) == 0 && key.size() > 4) {
+                // e.g. GRID1, GRID2, GRID3...
+                cfg.gridSizes.push_back(std::stoi(value));
+            }
+            else if (key.rfind("LENGTH", 0) == 0 && key.size() > 6) {
+                // e.g. LENGTH1, LENGTH2, LENGTH3...
+                cfg.lengths.push_back(std::stod(value));
+            }
+
+            // === Unrecognized key ===
             else {
                 std::cerr << "Warning: Unknown key \"" << key << "\" in config file.\n";
             }
@@ -140,3 +153,4 @@ InputParser parseInputFile(const std::string& filename) {
 
     return cfg;
 }
+
