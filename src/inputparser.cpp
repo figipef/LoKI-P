@@ -114,8 +114,8 @@ InputParser parseInputFile(const std::string& filename) {
             else if (key == "ELECTRON_MEAN_ENERGY") cfg.electronMeanEnergy = std::stod(value);
             else if (key == "SECONDARY_ELECTRON_MEAN_ENERGY") cfg.secondaryElectronMeanEnergy = std::stod(value);
             else if (key == "GRID_SIZE") cfg.gridSize = std::stoi(value);
-            else if (key == "PLASMA_INIT") cfg.plasmaInit = std::stoi(value);
-            else if (key == "PLASMA_END") cfg.plasmaEnd = std::stoi(value);
+            else if (key == "PLASMA_INIT_INDEX") cfg.plasmaInit = std::stoi(value);
+            else if (key == "PLASMA_END_INDEX") cfg.plasmaEnd = std::stoi(value);
             else if (key == "PERMITIVITY") cfg.permitivity = std::stod(value);
             else if (key == "LEFT_POTENTIAL") cfg.leftPotential = std::stod(value);
             else if (key == "RIGHT_POTENTIAL") cfg.rightPotential = std::stod(value);

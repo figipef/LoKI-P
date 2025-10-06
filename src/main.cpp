@@ -7,6 +7,9 @@
 #include "inputparser.h"
 #include "specie.h"
 #include "speciesloader.h"
+
+#include "grid.h"
+
 void inputconfirmer(InputParser cfg){
     try {
 
@@ -18,6 +21,7 @@ void inputconfirmer(InputParser cfg){
         std::cout << "Electron Mean Energy: " << cfg.electronMeanEnergy << " eV\n";
         std::cout << "Secondary Electron Mean Energy: " << cfg.secondaryElectronMeanEnergy << " eV\n";
         std::cout << "Permitivitiy: " << cfg.permitivity << "\n";
+        std::cout << "Grid Size: " << cfg.gridSize << "\n";
         std::cout << "Plasma range: " << cfg.plasmaInit << " -> " << cfg.plasmaEnd << "\n";
         std::cout << "Potential: Left = " << cfg.leftPotential
                   << " V, Right = " << cfg.rightPotential << " V\n";
@@ -92,6 +96,16 @@ int main() {
         std::cout << "q/m Ratio: " << p.get_qm_ratio() << "\n";
         std::cout << "Density Matrix:\n" << p.get_density() << "\n\n";
     }
+
+    Grid grid(     
+     input_cfg.gridSize,
+     input_cfg.plasmaInit,
+     input_cfg.plasmaEnd,
+     input_cfg.gridSizes,
+     input_cfg.lengths
+    );
+
+    grid.print_summary();
 
     return 0;
 }
