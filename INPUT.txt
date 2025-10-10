@@ -1,4 +1,4 @@
-INPUT FILE - v0.01 22.07
+INPUT FILE - v0.02 06.10
 
 GAS_TEMPERATURE=                400   K
 GAS_PRESSURE=                   760   TORR
@@ -7,13 +7,20 @@ ELECTRON_DENSITY=               1E6   M-3
 ELECTRON_MEAN_ENERGY=           5     EV
 SECONDARY_ELECTRON_MEAN_ENERGY= 2.5   EV
 
-GRID_SIZE=                      102
-GRID_INIT=                      34
-GRID_END=                       68
+GRID_SIZE=                      4
+PLASMA_INIT_INDEX=              1
+PLASMA_END_INDEX=              	2
 
 PERMITIVITY=                    5
 
-LENGTH=                         3E-4 M
+GRID1=                          1
+GRID2=                          2
+GRID3=                          1
+
+
+LENGTH1=                        3E-3 M
+LENGTH2=						3E-4 M
+LENGTH3=                        3E-3 M
 
 LEFT_POTENTIAL=                 1E3   V
 RIGHT_POTENTIAL=                0     V
