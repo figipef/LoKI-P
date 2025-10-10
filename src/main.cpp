@@ -26,16 +26,16 @@ int main() {
         return 1;
     }
 
-    std::vector<Specie> particles = create_species_from_config(input_cfg);
+    std::vector<Specie> species = create_species_from_config(input_cfg);
 
     // Print particle info
-    for (const auto& p : particles) {
-        std::cout << "Particle ID: " << p.get_id() << "\n";
-        std::cout << "Name: " << p.get_name() << "\n";
-        std::cout << "Charge: " << p.get_charge() << "\n";
-        std::cout << "Mass: " << p.get_mass() << "\n";
-        std::cout << "q/m Ratio: " << p.get_qm_ratio() << "\n";
-        std::cout << "Density Matrix:\n" << p.get_density() << "\n\n";
+    for (const auto& s : species) {
+        std::cout << "Specie ID: " << s.get_id() << "\n";
+        std::cout << "Name: " << s.get_name() << "\n";
+        std::cout << "Charge: " << s.get_charge() << "\n";
+        std::cout << "Mass: " << s.get_mass() << "\n";
+        std::cout << "q/m Ratio: " << s.get_qm_ratio() << "\n";
+        std::cout << "Density Matrix:\n" << s.get_density() << "\n\n";
     }
 
     return 0;
