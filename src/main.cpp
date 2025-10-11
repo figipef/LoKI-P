@@ -75,6 +75,7 @@ int main() {
         std::cout << "Solver type: " << solver_cfg.solverType << "\n";
     } catch (const std::exception& e) {
         std::cerr << "Error parsing solver config: " << e.what() << "\n";
+        return 1;
     }
 
     try {
@@ -88,7 +89,7 @@ int main() {
 
     inputconfirmer(input_cfg); // prints the  input file configuration details
 
-    std::vector<Specie> particles = create_species_from_config(input_cfg);
+    std::vector<Specie> species = create_species_from_config(input_cfg);
 
 
     // Print particle info
@@ -113,7 +114,7 @@ int main() {
     grid.print_summary();
 
     std::vector<double> eps(grid.size(), 1.0);
-    Poisson poisson(grid, grid.permitivity());
+    Poisson poisson(grid, grid.permitivity(), solver_cfg.is_axial);
 
     poisson.print_summary();
 
