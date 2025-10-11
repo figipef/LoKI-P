@@ -10,7 +10,8 @@ public:
          int plasma_start,
          int plasma_end,
          const std::vector<int>& region_cells,
-         const std::vector<double>& region_lengths);
+         const std::vector<double>& region_lengths,
+         const std::vector<double>& rperms);
 
     // --- Accessors ---
     int size() const { return grid_size_; }
@@ -23,6 +24,7 @@ public:
     const std::vector<double>& cell_centers() const { return cell_centers_; }
     const std::vector<double>& cell_lengths() const { return cell_lengths_; }
     const std::vector<double>& boundaries() const { return boundaries_; }
+    const std::vector<double>& permitivity() const { return permitivity_; }
 
     double x_center(int i) const { return cell_centers_.at(i); }
     double dx(int i) const { return cell_lengths_.at(i); }
@@ -44,6 +46,8 @@ private:
     std::vector<double> boundaries_;    // N+1 boundaries
     std::vector<double> cell_centers_;  // N centers
     std::vector<double> cell_lengths_;  // N cell widths
+    std::vector<double> rperms_;        // Relative permitivities
+    std::vector<double> permitivity_;   // N permitvities
 
     void build_grid();
 };
