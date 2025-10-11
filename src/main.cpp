@@ -9,6 +9,7 @@
 #include "speciesloader.h"
 
 #include "grid.h"
+#include "poisson.h"
 
 void inputconfirmer(InputParser cfg){
     try {
@@ -32,11 +33,12 @@ void inputconfirmer(InputParser cfg){
 
         std::cout << "--- Grid Configuration ---\n";
         for (size_t i = 0; i < cfg.gridSizes.size(); ++i) {
-            std::cout << "  Segment " << (i+1)
+            std::cout << "  Region " << (i+1)
                       << ": GRID=" << cfg.gridSizes[i]
-                      << ", LENGTH=" << cfg.lengths[i] << " m\n";
+                      << ", LENGTH=" << cfg.lengths[i] << " m"
+                      << ", RPERM=" << ((i < cfg.rperms.size()) ? cfg.rperms[i] : cfg.permitivity)
+                      << "\n";
         }
-        std::cout << std::endl;
 
         std::cout << "--- Species ---\n";
         for (size_t i = 0; i < cfg.speciesNames.size(); ++i) {
@@ -104,10 +106,16 @@ int main() {
      input_cfg.plasmaInit,
      input_cfg.plasmaEnd,
      input_cfg.gridSizes,
-     input_cfg.lengths
+     input_cfg.lengths,
+     input_cfg.rperms
     );
 
     grid.print_summary();
+
+    std::vector<double> eps(grid.size(), 1.0);
+    Poisson poisson(grid, grid.permitivity());
+
+    poisson.print_summary();
 
     return 0;
 }

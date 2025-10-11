@@ -6,12 +6,14 @@ Grid::Grid(int grid_size,
            int plasma_start,
            int plasma_end,
            const std::vector<int>& region_cells,
-           const std::vector<double>& region_lengths)
+           const std::vector<double>& region_lengths,
+           const std::vector<double>& rperms)
     : grid_size_(grid_size),
       plasma_start_(plasma_start),
       plasma_end_(plasma_end),
       region_cells_(region_cells),
-      region_lengths_(region_lengths)
+      region_lengths_(region_lengths),
+      rperms_(rperms)
 {
     if (region_cells_.size() != region_lengths_.size())
         throw std::runtime_error("region_cells and region_lengths must have the same size.");
@@ -33,6 +35,7 @@ void Grid::build_grid()
     boundaries_.resize(grid_size_ + 1);
     cell_centers_.resize(grid_size_);
     cell_lengths_.resize(grid_size_);
+    permitivity_.resize(grid_size_);
 
     double x = 0.0;
     int current_cell = 0;
@@ -47,7 +50,27 @@ void Grid::build_grid()
             x += dx;
             cell_lengths_[current_cell] = dx;
             cell_centers_[current_cell] = x - 0.5 * dx;
+
+            // Set up permitivity vector
+            if (current_cell < plasma_start_){
+
+                permitivity_[current_cell] = rperms_[0];
+
+            } else if (current_cell >= plasma_start_ && current_cell <= plasma_end_){
+
+                permitivity_[current_cell] = rperms_[1];
+
+            } else if ( current_cell > plasma_end_ && current_cell <= grid_size_){
+
+                permitivity_[current_cell] = rperms_[2];
+
+            } else {
+
+                throw std::runtime_error("Permitivity initialization failed, out of range");
+            }
+
             ++current_cell;
+            
         }
     }
 
