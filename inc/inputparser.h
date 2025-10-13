@@ -14,10 +14,11 @@ struct InputParser {
     int gridSize;
     int plasmaInit;
     int plasmaEnd;
-    double permitivity;
 
+    double permitivity;
     std::vector<int> gridSizes;
     std::vector<double> lengths;
+    std::vector<double> rperms;
 
     double leftPotential;
     double rightPotential;
@@ -36,6 +37,7 @@ struct InputParser {
     std::vector<std::vector<int>> reactTable;
     std::vector<std::vector<int>> wallReactTable;
 };
+
 
 InputParser parseInputFile(const std::string& filename);
 

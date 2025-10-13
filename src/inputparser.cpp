@@ -65,7 +65,7 @@ InputParser parseInputFile(const std::string& filename) {
 
         std::string trimmed = trim(line);
 
-        // --- Handle table reading ---
+        // === Handle reaction tables ===
         if (readingReactTable && trimmed.find("WALL_REACT_TABLE") != std::string::npos) {
             readingReactTable = false;
             readingWallReactTable = true;
@@ -98,7 +98,7 @@ InputParser parseInputFile(const std::string& filename) {
             continue;
         }
 
-        // --- Normal line with key=value ---
+        // === Handle standard key=value lines ===
         auto pos = trimmed.find('=');
         if (pos == std::string::npos) continue;
 
@@ -107,7 +107,6 @@ InputParser parseInputFile(const std::string& filename) {
         std::string value = strip_units(raw_value);
 
         try {
-            // === Scalars ===
             if (key == "GAS_TEMPERATURE") cfg.gasTemperature = std::stod(value);
             else if (key == "GAS_PRESSURE") cfg.gasPressure = std::stod(value);
             else if (key == "ELECTRON_DENSITY") cfg.electronDensity = std::stod(value);
@@ -130,27 +129,47 @@ InputParser parseInputFile(const std::string& filename) {
             else if (key == "NAMES") cfg.speciesNames = parseQuotedList(raw_value);
             else if (key == "MASS") cfg.speciesMasses = parseDoubleList(raw_value);
             else if (key == "CHARGE") cfg.speciesCharges = parseIntList(raw_value);
-            else if (key == "SPECIES") continue; // marker only
+            else if (key == "SPECIES") continue;
 
-            // === Variable-length grids and lengths ===
-            else if (key.rfind("GRID", 0) == 0 && key.size() > 4) {
-                // e.g. GRID1, GRID2, GRID3...
+            // === Multi-region elements ===
+            else if (key.rfind("GRID", 0) == 0 && key.size() > 4)
                 cfg.gridSizes.push_back(std::stoi(value));
-            }
-            else if (key.rfind("LENGTH", 0) == 0 && key.size() > 6) {
-                // e.g. LENGTH1, LENGTH2, LENGTH3...
-                cfg.lengths.push_back(std::stod(value));
-            }
 
-            // === Unrecognized key ===
+            else if (key.rfind("LENGTH", 0) == 0 && key.size() > 6)
+                cfg.lengths.push_back(std::stod(value));
+
+            else if (key.rfind("RPERM", 0) == 0 && key.size() > 5)
+                cfg.rperms.push_back(std::stod(value));
+
             else {
                 std::cerr << "Warning: Unknown key \"" << key << "\" in config file.\n";
             }
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             std::cerr << "Error parsing key \"" << key << "\": " << e.what() << "\n";
         }
     }
 
+    // === Consistency checks ===
+    size_t nGrid = cfg.gridSizes.size();
+    size_t nLen  = cfg.lengths.size();
+    size_t nPerm = cfg.rperms.size();
+
+    if (nGrid != nLen || nGrid != nPerm || nLen != nPerm) {
+        std::cerr << "Warning: Inconsistent grid configuration:\n"
+                  << "  Grids: " << nGrid
+                  << ", Lengths: " << nLen
+                  << ", RPERMs: " << nPerm << "\n";
+    }
+
+    if (cfg.gridSizes.empty()) {
+        std::cerr << "Warning: No GRID segments defined. Using fallback 1x1x1.\n";
+        cfg.gridSizes = {1};
+        cfg.lengths = {1.0};
+        cfg.rperms = {cfg.permitivity > 0 ? cfg.permitivity : 1.0};
+    }
+
     return cfg;
 }
+
 

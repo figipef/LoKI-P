@@ -36,7 +36,14 @@ ConfigParser parseSolverConfig(const std::string& filename) {
                 cfg.chemistry = true;
             else
                 cfg.chemistry = false;
-        }
+        } else if (key == "Grid_Type") {
+            if (value == "Axial" || value == "Ax" || value == "ax" || value == "True")
+                cfg.is_axial = true;
+            else if (value == "Radial" || value == "Rad" || value == "False" || value == "rad")
+                cfg.is_axial = false;
+            else
+                throw std::runtime_error("Failed to define geometry in config file. Please select either Radial or Axial geometries");
+        } 
     }
 
     return cfg;
