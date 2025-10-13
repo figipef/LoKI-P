@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include "poisson.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
@@ -22,12 +23,11 @@ Poisson::Poisson(const Grid& grid,
     rhs_surface_charges.resize(n, 0.0);
     rhs_boundary_potential.resize(n, 0.0);
 
-    boundary_conditions_.resize(2, 0.0); // default: both 0 V
+    boundary_conditions_.resize(2, 0); // default: both Dirichlet
+    boundary_values_.resize(2, 0); // default: both 0 V
     surface_charges_.resize(n + 1, 0.0); // one per boundary
 
     initialize_coefficients();// Define the vectors for Thomas Algorithm
-
-    define_lhs_matrix(); 
 
     std::cout << "Initialized Poisson operator.\n";
 }
@@ -56,60 +56,117 @@ void Poisson::initialize_coefficients()
         phie_[i] =  (i + 1 < n) ? east_coef: 0;
         phic_[i] = -(phiw_[i] + phie_[i]);
     }
+
+    // Update the first and last values to account for ghost cells
+    phiw_[0] = phiw_[1];
+    phie_[n-1] = phie_[n-2];
+    phic_[0] -= phiw_[0];
+    phic_[n-1] -= phie_[n-1];
 }
 
-void update_surface_charges(double left_charge, double right_charge)
+void Poisson::update_boundary_values(const std::vector<int>& boundary_conditions, const std::vector<double>& boundary_values)
+{
+
+    boundary_conditions_ = boundary_conditions;
+    boundary_values_ = boundary_values;
+
+    int n = grid_.size();
+
+    if (boundary_conditions[0]){ // Neumann left side
+        phic_[0] += phiw_[0];
+    } else { // Dirichlet left side
+        rhs_boundary_potential[0] = -boundary_values[0] * phiw_[0];
+    }
+
+    if (boundary_conditions[1]){ // Neumann right side
+        phic_[n-1] += phie_[n-1];
+    } else { // Dirichelet right side
+        rhs_boundary_potential[n-1] = -boundary_values[1] * phie_[n-1];
+    }
+}
+
+void Poisson::update_surface_charges(const std::vector<int>& boundary_idxs, const std::vector<double>& surface_charges)
 {
     // Function to update the surface charges in 
     // the right hand side in the poisson equation
-
-    const int lboundary_idx = grid_.plasma_start_index() //left boundary index for the dieletric surface charges
-    const int rboundary_idx = grid_.plasma_end_index() //left boundary index for the dieletric surface charges
 
     const std::vector<double>& centers = grid_.cell_centers();
     const std::vector<double>& boundaries = grid_.boundaries();
 
     const std::vector<double> permitivity = grid_.permitivity();
 
-    surface_charges_[lboundary_idx] = left_charge;
-    surface_charges_[rboundary_idx+1] = right_charge;
+    int N = boundary_idxs.size();
 
-    // Calculate the left and right geometry factors PI * delta_r^2
-    double geom_factor_l = 1; 
-    double geom_factor_r = 1;
-    /*
-    NEEDS TO BE ADDED FOR RADIAL CALCULATION!!!
-    if (!is_axial_){
-        geom_factor = M_PI * ();
+    for (int i = 0; i < N; i++ ){
+        surface_charges_[boundary_idxs[i]] = surface_charges[i];
+        rhs_surface_charges[boundary_idxs[i]] = 0.0;
     }
-    */
 
-    // STILL NEEDS TO BE MULTIPLIED BY THE GEOMETRY FACTOR IN CASE OF RADIAL CALCULATIONS
-    // left case i + 1 = left boundary index
-    double l_nume = centers[lboundary_idx] - boundaries[lboundary_idx] // numerator x(i+1) - x(i+1/2)
-    // denominator eps(i) * (x(i+1) - x(i+1/2)) + eps(i+1) * (x(i+1/2) - x(i))
-    double l_denom = permitivity[lboundary_idx - 1] * (centers[lboundary_idx] - boundaries[lboundary_idx]) + \\
-                     permitivity[lboundary_idx] * (boundaries[lboundary_idx] - centers[lboundary_idx - 1]) 
-
-    // right case i = right boundary index
-    double r_nume = centers[rboundary_idx + 1] - boundaries[rboundary_idx + 1] // numerator x(i+1) - x(i+1/2)
-    // denominator eps(i) * (x(i+1) - x(i+1/2)) + eps(i+1) * (x(i+1/2) - x(i))
-    double r_denom = permitivity[rboundary_idx] * (centers[rboundary_idx + 1] - boundaries[rboundary_idx + 1]) + \\
-                     permitivity[rboundary_idx + 1] * (boundaries[rboundary_idx + 1] - centers[rboundary_idx]) 
-
-
-    rhs_surface_charges[lboundary_idx] = surface_charges_[lboundary_idx] * permitivity[lboundary_idx] * (-1) * l_nume / l_denom;
-    rhs_surface_charges[lboundary_idx - 1] = surface_charges_[lboundary_idx] * permitivity[lboundary_idx-1] * l_nume / l_denom;
-
-    rhs_surface_charges[rboundary_idx] = surface_charges_[rboundary_idx] * permitivity[rboundary_idx] * r_nume / r_denom;
-    rhs_surface_charges[rboundary_idx + 1] = surface_charges_[rboundary_idx] * permitivity[rboundary_idx + 1] * (-1) *r_nume / r_denom;
+    for (int i = 0; i < N; i++ ){
+        // Update the right hand side values
+        calculate_rhs_charges(boundary_idxs[i], surface_charges_[i], centers, boundaries, permitivity);
+    }
 }
 
-void Poisson::set_boundary_condition(int side, double value)
+void Poisson::calculate_rhs_charges(int boundary_idx, double surface_charge, const std::vector<double>& centers, const std::vector<double>& boundaries, const std::vector<double>& permitivity)
 {
-    if (side < 0 || side > 1)
-        throw std::invalid_argument("Boundary side must be 0 (left) or 1 (right).");
-    boundary_conditions_[side] = value;
+
+    // STILL NEEDS TO BE MULTIPLIED BY THE GEOMETRY FACTOR IN CASE OF RADIAL CALCULATIONS
+ 
+    // boundary at i, is between cell i and i - 1
+    double nume = centers[boundary_idx] - boundaries[boundary_idx]; // numerator x(i+1) - x(i+1/2)
+    // denominator eps(i) * (x(i+1) - x(i+1/2)) + eps(i+1) * (x(i+1/2) - x(i))
+    double denom = permitivity[boundary_idx - 1] * (centers[boundary_idx] - boundaries[boundary_idx]) +
+                   permitivity[boundary_idx] * (boundaries[boundary_idx] - centers[boundary_idx - 1]); 
+
+    // STILL NEEDS TO BE MULTIPLIED BY THE GEOMETRY FACTOR IN CASE OF RADIAL CALCULATIONS    
+    rhs_surface_charges[boundary_idx] += surface_charge * permitivity[boundary_idx] * (-1) * nume / denom;
+    rhs_surface_charges[boundary_idx - 1] += surface_charge * permitivity[boundary_idx-1] * nume / denom;
+}
+
+std::vector<double> Poisson::solve_thomasalg(const std::vector<double>& charge_density)
+{
+    const int N = charge_density.size();
+    const std::vector<double>& boundaries = grid_.boundaries();
+
+    std::vector<double> rhs;
+    rhs.resize(N,0.0);
+
+    for (int i = 0; i < N; i++){
+
+        double geom_factor; // Geometry factor for a axial
+
+        if (!is_axial_){
+            geom_factor = (boundaries[i+1] * boundaries[i+1] - boundaries[i]* boundaries[i]) * M_PI;
+        } else {
+            geom_factor = (boundaries[i+1] - boundaries[i]);
+        }
+
+        rhs[i] = geom_factor * charge_density[i] + rhs_surface_charges[i] + rhs_boundary_potential[i];
+    }
+
+    // temporary vectors for thomas algorithm
+    std::vector<double> v1(N-1, 0.0);
+    std::vector<double> v2(N, 0.0);
+    std::vector<double> v3(N, 0.0);
+
+    v1[0] = phie_[0]/phic_[0];
+    v2[0] = rhs[0]/phic_[0];
+
+    for (int i = 1; i < N-1; i++){
+        v1[i] = phie_[i]/(phic_[i] - phiw_[i-1]*v1[i-1]);
+    }
+    for (int i = 1; i < N; i++){
+        v2[i] = (rhs[i] - phiw_[i-1] *v2[i-1])/(phic_[i] - phiw_[i-1]*v1[i-1]);
+    }
+
+    v3[N-1] = v2[N-1];
+
+    for (int i = N-1; i > 0; i--){
+        v3[i-1] = v2[i-1] - v1[i-1]*v3[i];
+    }
+
+    return v3; // Potential Vector
 }
 
 void Poisson::print_summary() const
@@ -121,8 +178,8 @@ void Poisson::print_summary() const
     std::cout << "Total length: " << grid_.total_length() << " m\n";
 
     std::cout << "\nBoundary conditions (V): "
-              << "Left = " << boundary_conditions_[0]
-              << ", Right = " << boundary_conditions_[1] << "\n";
+              << "Left = " << boundary_values_[0]
+              << ", Right = " << boundary_values_[1] << "\n";
 
     std::cout << "phic (central): ";
     for (auto v : phic_) std::cout << v << " ";

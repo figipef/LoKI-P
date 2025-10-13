@@ -116,7 +116,35 @@ int main() {
     std::vector<double> eps(grid.size(), 1.0);
     Poisson poisson(grid, grid.permitivity(), solver_cfg.is_axial);
 
-    poisson.print_summary();
+    // --- 4. Set boundary conditions ---
+    std::vector<int> bc{0, 0};        // 0 = Dirichlet, 1 = Neumann
+    std::vector<double> bv{0.0, 1.0}; // V at left=0V, right=1V
+    poisson.update_boundary_values(bc, bv);
+    std::cout << "RHS boundary: ";
+    for(auto v : poisson.rhs_boundary_potential) std::cout << v << " ";
+    std::cout << "\n";
+
+    // --- 5. Define a simple charge density ---
+    std::vector<double> rho(grid.size(), 0.0); // no charges
+    rho[2] = 1e7;
+    // --- 6. Solve Poisson equation ---
+    std::vector<double> phi = poisson.solve_thomasalg(rho);
+
+    // --- 7. Print results ---
+    std::cout << "Potential vector:\n";
+    for (int i = 0; i < grid.size(); ++i)
+        std::cout << "phi[" << i << "] = " << phi[i] << "\n";
+    bv[1] = 2.0;
+    rho[2] = 0;
+    poisson.update_boundary_values(bc, bv);
+    phi = poisson.solve_thomasalg(rho);
+
+    // --- 7. Print results ---
+    std::cout << "Potential vector:\n";
+    for (int i = 0; i < grid.size(); ++i)
+        std::cout << "phi[" << i << "] = " << phi[i] << "\n";
+
+    poisson.print_summary();    
 
     return 0;
 }

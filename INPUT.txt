@@ -11,19 +11,19 @@ GRID_SIZE=                      5
 PLASMA_INIT_INDEX=              1
 PLASMA_END_INDEX=              	3
 
-PERMITIVITY=                    5
+PERMITIVITY=                    1
 
 GRID1=                          1
 GRID2=                          3
 GRID3=                          1
 
 LENGTH1=                        1E-3 M
-LENGTH2=						3E-4 M
+LENGTH2=						3E-3 M
 LENGTH3=                        1E-3 M
 
-RPERM1=                         20   
+RPERM1=                         1   
 RPERM2=							1
-RPERM3=							20
+RPERM3=							1
 
 LEFT_POTENTIAL=                 1E3   V
 RIGHT_POTENTIAL=                0     V
