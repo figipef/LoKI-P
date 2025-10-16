@@ -11,7 +11,8 @@ BINDIR := $(ROOTDIR)/bin
 OBJDIR := $(BUILDDIR)/obj
 
 # Files
-SOURCES := $(wildcard $(SRCDIR)/*.cpp)
+#SOURCES := $(wildcard $(SRCDIR)/*.cpp)
+SOURCES := $(shell find $(SRCDIR) -name '*.cpp')
 OBJECTS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
 
 # Program name
@@ -32,6 +33,7 @@ $(TARGET): $(OBJECTS) | $(BINDIR)
 
 # Compilation
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
+	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Create directories

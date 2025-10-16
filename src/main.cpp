@@ -13,6 +13,8 @@
 #include "poisson.h"
 #include "poisson_mpi.h"
 
+#include "advection/advectionFactory.h"
+
 void inputconfirmer(InputParser cfg){
     try {
 
@@ -146,6 +148,12 @@ int main(int argc, char** argv){
             std::cout << "i="<<i<<" x="<<centers[i]<<" phi="<<full_phi[i]<<"\n";
         }
     }
+
+    // Factory handles everything — just request the scheme by name and limiter
+    auto advection = AdvectionFactory::create(solver_cfg.convectionScheme,input_cfg.plasmaInit, input_cfg.plasmaEnd, solver_cfg.convectionLimiter);
+
+    // Now you can directly compute flux
+    //std::vector<double> flux = advection->compute_flux(density, velocity, centers, sizes, dt);
 
     MPI_Finalize();
     poisson.print_summary();    

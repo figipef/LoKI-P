@@ -6,6 +6,7 @@
 
 Solver = Explicit
 Solver_Type = RK4
-Convection_Scheme = UNO2
+Convection_Scheme = UNO
+Convection_Limiter = 2
 Chemistry = No
 Grid_Type = Ax

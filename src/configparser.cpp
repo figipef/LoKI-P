@@ -31,6 +31,7 @@ ConfigParser parseSolverConfig(const std::string& filename) {
         if (key == "Solver") cfg.solver = value;
         else if (key == "Solver_Type") cfg.solverType = value;
         else if (key == "Convection_Scheme") cfg.convectionScheme = value;
+        else if (key == "Convection_Limiter") cfg.convectionLimiter = value;
         else if (key == "Chemistry") {
             if (value == "Yes" || value == "ON" || value == "True")
                 cfg.chemistry = true;
