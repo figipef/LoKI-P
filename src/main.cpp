@@ -1,7 +1,8 @@
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <mpi.h>
 
 #include "configparser.h"
 #include "inputparser.h"
@@ -10,6 +11,7 @@
 
 #include "grid.h"
 #include "poisson.h"
+#include "poisson_mpi.h"
 
 void inputconfirmer(InputParser cfg){
     try {
@@ -66,7 +68,13 @@ void inputconfirmer(InputParser cfg){
     }
 }
 
-int main() {
+int main(int argc, char** argv){
+    MPI_Init(&argc, &argv);  // Initialize MPI
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     ConfigParser solver_cfg;
     InputParser input_cfg;
 
@@ -87,20 +95,20 @@ int main() {
     }
 
 
-    inputconfirmer(input_cfg); // prints the  input file configuration details
+    //inputconfirmer(input_cfg); // prints the  input file configuration details
 
     std::vector<Specie> species = create_species_from_config(input_cfg);
 
 
     // Print particle info
-    for (const auto& s : species) {
-        std::cout << "Specie ID: " << s.get_id() << "\n";
-        std::cout << "Name: " << s.get_name() << "\n";
-        std::cout << "Charge: " << s.get_charge() << "\n";
-        std::cout << "Mass: " << s.get_mass() << "\n";
-        std::cout << "q/m Ratio: " << s.get_qm_ratio() << "\n";
-        std::cout << "Density Matrix:\n" << s.get_density() << "\n\n";
-    }
+    //for (const auto& s : species) {
+    //    std::cout << "Specie ID: " << s.get_id() << "\n";
+    //    std::cout << "Name: " << s.get_name() << "\n";
+    //    std::cout << "Charge: " << s.get_charge() << "\n";
+    //    std::cout << "Mass: " << s.get_mass() << "\n";
+    //    std::cout << "q/m Ratio: " << s.get_qm_ratio() << "\n";
+    //    std::cout << "Density Matrix:\n" << s.get_density() << "\n\n";
+    //}
 
     Grid grid(     
      input_cfg.gridSize,
@@ -111,39 +119,35 @@ int main() {
      input_cfg.rperms
     );
 
-    grid.print_summary();
+    //grid.print_summary();
 
     std::vector<double> eps(grid.size(), 1.0);
-    Poisson poisson(grid, grid.permitivity(), solver_cfg.is_axial);
-
-    // --- 4. Set boundary conditions ---
-    std::vector<int> bc{0, 0};        // 0 = Dirichlet, 1 = Neumann
-    std::vector<double> bv{0.0, 1.0}; // V at left=0V, right=1V
+    PoissonMPI poisson(grid, eps, solver_cfg.is_axial);
+    // -------------------------
+    // Boundary conditions
+    std::vector<int> bc = {0, 0};        // 0=Dirichlet, 1=Neumann
+    std::vector<double> bv = {0.0, 1.0}; // Left=0V, Right=1V
     poisson.update_boundary_values(bc, bv);
-    std::cout << "RHS boundary: ";
-    for(auto v : poisson.rhs_boundary_potential) std::cout << v << " ";
-    std::cout << "\n";
 
-    // --- 5. Define a simple charge density ---
-    std::vector<double> rho(grid.size(), 0.0); // no charges
-    rho[2] = 1e7;
-    // --- 6. Solve Poisson equation ---
-    std::vector<double> phi = poisson.solve_thomasalg(rho);
+    // -------------------------
+    // Example charge density
+    std::vector<double> rho(grid.size(), 0.0);
 
-    // --- 7. Print results ---
-    std::cout << "Potential vector:\n";
-    for (int i = 0; i < grid.size(); ++i)
-        std::cout << "phi[" << i << "] = " << phi[i] << "\n";
-    bv[1] = 2.0;
-    rho[2] = 0;
-    poisson.update_boundary_values(bc, bv);
-    phi = poisson.solve_thomasalg(rho);
+    // -------------------------
+    // Solve Poisson equation
+    std::vector<double> local_phi = poisson.solve(rho);
+    std::vector<double> centers = grid.cell_centers();
+    std::vector<double> boundaries = grid.boundaries();
+    // Gather full solution on rank 0 inside solve(), or get local_phi
+    std::vector<double> full_phi;
+    if(rank==0){
+        full_phi = local_phi; // solve() already returns full solution on rank 0
+        for(int i=0;i<grid.size();i++){
+            std::cout << "i="<<i<<" x="<<centers[i]<<" phi="<<full_phi[i]<<"\n";
+        }
+    }
 
-    // --- 7. Print results ---
-    std::cout << "Potential vector:\n";
-    for (int i = 0; i < grid.size(); ++i)
-        std::cout << "phi[" << i << "] = " << phi[i] << "\n";
-
+    MPI_Finalize();
     poisson.print_summary();    
 
     return 0;

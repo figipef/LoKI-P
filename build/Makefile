@@ -1,25 +1,23 @@
 # Compiler
-CXX := g++
-CXXFLAGS := -std=c++14 -Wall -Wextra -Wpedantic -Wconversion -Wunused-parameter -Wunused-but-set-parameter -O2
+CXX := mpicxx
+CXXFLAGS := -std=c++14 -Wall -Wextra -Wpedantic -Wconversion -Wunused-parameter -Wunused-but-set-parameter -O2 \
+            -I../inc
 
 # Directories
 ROOTDIR := ..
 BUILDDIR := $(ROOTDIR)/build
 SRCDIR := $(ROOTDIR)/src
 BINDIR := $(ROOTDIR)/bin
-INCDIR := $(ROOTDIR)/inc
 OBJDIR := $(BUILDDIR)/obj
 
 # Files
-SOURCES := $(wildcard $(SRCDIR)/*.cpp) #$(wildcard $(INCDIR)\chi2/*.cpp)
+SOURCES := $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
-
-$(info $(SRCDIR))
 
 # Program name
 PROGRAM_NAME := test
 ifdef NAME
-	PROGRAM_NAME := $(NAME)
+    PROGRAM_NAME := $(NAME)
 endif
 
 # Target binary
@@ -30,19 +28,18 @@ all: $(TARGET)
 
 # Linking
 $(TARGET): $(OBJECTS) | $(BINDIR)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(OBJECTS) -o $@
 
 # Compilation
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Create build directory
+# Create directories
 $(OBJDIR):
-	mkdir obj
+	mkdir -p $(OBJDIR)
 
-# Create bin directory
 $(BINDIR):
-	@if not exist "$(BINDIR)" mkdir "$(BINDIR)"
+	mkdir -p $(BINDIR)
 
 # Clean
 clean:
